@@ -1,0 +1,6 @@
+const encoder=new TextEncoder();
+function decode(value:string){return Uint8Array.from(atob(value),c=>c.charCodeAt(0))}
+function encode(value:Uint8Array){let s='';for(const b of value)s+=String.fromCharCode(b);return btoa(s)}
+async function keyFrom(master:string){const bytes=decode(master);if(bytes.length!==32)throw Error('Credential storage is not configured');return crypto.subtle.importKey('raw',bytes,'AES-GCM',false,['encrypt','decrypt'])}
+export async function seal(secret:string,master:string,owner:string,id:string){const iv=crypto.getRandomValues(new Uint8Array(12));const key=await keyFrom(master);const value=await crypto.subtle.encrypt({name:'AES-GCM',iv,additionalData:encoder.encode(owner+':'+id)},key,encoder.encode(secret));return 'v1.'+encode(iv)+'.'+encode(new Uint8Array(value))}
+export async function unseal(value:string,master:string,owner:string,id:string){const [version,iv,cipher]=value.split('.');if(version!=='v1'||!iv||!cipher)throw Error('Invalid credential record');const key=await keyFrom(master);const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:decode(iv),additionalData:encoder.encode(owner+':'+id)},key,decode(cipher));return new TextDecoder().decode(plain)}
