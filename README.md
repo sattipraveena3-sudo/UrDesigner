@@ -7,11 +7,11 @@ An early working fashion studio: manual artwork editing, synchronized 3D visuali
 ## What works in this beta
 
 - Manual 2D design: text, rectangle, circle, freehand vector strokes, image artwork, transforms, colors, opacity, visibility, locking, duplication, ordering, undo and redo.
-- Four stylized garment templates: T-shirt, hoodie concept, kurta and A-line dress. These are visual templates, not validated patterns.
+- 27 garment starting points across Indian wear, dresses, tops/layers, and bottoms/sets, with a mannequin-based volumetric preview. These are visual templates, not validated patterns.
 - Front/back artwork and garment settings feed a real Three.js mesh preview. Rotate, zoom, reset camera, adjust lighting, select an artwork side by double-clicking the mesh, and export a PNG.
 - Editable material/color/pattern/sleeve/pocket settings. Satin, linen, cotton and denim are visual finishes, not physical material calibrations.
 - Authenticated cloud projects, optimistic version checks, server revision snapshots, account-scoped local draft recovery, portable JSON exports with embedded images, PNG export and reimport.
-- Optional encrypted provider connections: OpenAI, Anthropic, Gemini, Groq, OpenRouter, DeepSeek, Mistral and Cohere. Bring a compatible chat model ID and your own API key. Testing a connection can incur a small provider charge. Provider accounts have not been live-tested without user keys.
+- Optional encrypted provider connections: OpenAI, Anthropic, Gemini, Groq, OpenRouter, DeepSeek, Mistral and Cohere. Bring a compatible chat model ID and your own API key. Connecting checks the provider models endpoint without a text-generation call. Provider accounts have not been live-tested without user keys.
 - Fashion chat, saved prompt history, strict structured suggestions for colors/materials/pattern/pocket, review before applying, and undo after applying.
 - Maker measurements/notes and text export; four written Academy lessons; dark/light modes; owner-only aggregate counts.
 
@@ -19,11 +19,11 @@ Ollama is presented with an honest local-companion requirement. Custom OpenAI-co
 
 ## Hosting and identity
 
-This implementation uses the managed Sites / Cloudflare Workers runtime with D1 and R2. It does not use Vercel Hobby or Supabase's default email service. The private beta uses platform-provided authenticated identity. **Direct Google, GitHub, email and magic-link signup are not implemented in this deployment.** A production Google OAuth app, redirect domain and identity integration must be configured for public launch; users must never provide Gmail passwords.
+This implementation uses the managed Sites / Cloudflare Workers runtime with D1 and R2. It does not use Vercel Hobby or Supabase's default email service. The publicly accessible studio uses platform-provided identity for cloud work; anonymous users can save projects and images on their device. **Direct Google, GitHub, email and magic-link signup are not implemented in this deployment.** A production Google OAuth app, redirect domain and identity integration must be configured for public launch; users must never provide Gmail passwords.
 
 Do not independently expose the Worker while trusting arbitrary `oai-authenticated-*` headers. On Sites, the trusted gateway supplies identity. A standalone deployment must replace `app/chatgpt-auth.ts` with verified OIDC/session validation and reject user-supplied identity headers.
 
-BYOK transfers provider usage charges to the user's provider account; it does not eliminate shared hosting, database, bandwidth, email, support or moderation costs. No claim of unlimited free production capacity is made. Free-tier policies and limits must be rechecked at public launch. The initial publication is private.
+BYOK transfers provider usage charges to the user's provider account; it does not eliminate shared hosting, database, bandwidth, email, support or moderation costs. No claim of unlimited free production capacity is made. Free-tier policies and limits must be rechecked at public launch. The September 13 update is prepared for public access at the owner’s request.
 
 ## Development
 
@@ -46,3 +46,11 @@ No provider keys belong in public environment variables, localStorage, project d
 See [Engineering plan](docs/ENGINEERING.md), [Security](docs/SECURITY.md), and [Roadmap](docs/ROADMAP.md). Image upload adds editable artwork; it does not reconstruct a garment from a photograph. Realistic draping, sewing patterns, body measurement extraction, embroidery digitization, mesh sculpting, multiplayer collaboration, public marketplace/social features, paid sales, video Academy, and a full moderation console remain future milestones. AI currently provides text and constrained document edits, not image generation or autonomous CAD operations.
 
 A generated satin-gown study in `public/images/inspiration.webp` supports the material lesson. All editable garment shapes are procedural application data, not sourced commercial garment assets. Keep dependency licenses and vendored component attribution intact.
+
+## September 13 corrections
+
+The API connection bug was reproduced in the installed Cloudflare runtime: `redirect: "error"` throws before a network request is sent. Both account verification and chat now use `manual` mode and explicitly reject 3xx responses without forwarding credentials. Account verification uses `/models`; the selected chat model still needs inference access. Safe network category codes replace the opaque catch-all error, without logging headers or keys. A real Miniflare/workerd regression test covers the accepted mode, alongside 13 deterministic schema, geometry and security tests. No live paid inference was run with user credentials.
+
+New manual controls: separate front/back necklines, sleeve style/length, garment length, waist ease, hem flare, asymmetric/scalloped hems, buttons/zipper/wrap details, border/lace/embroidery-style finishes, draped dupatta, 12 material presets, seven repeat patterns, uploaded fabric swatches with repeat size, and an unclipped sketch canvas. Anonymous projects use localStorage and IndexedDB; provider secrets never use either. This is device-local storage, not a fully offline-installable PWA.
+
+The garment library contains 27 distinct starting specifications, not production-validated sewing patterns. Preview mannequin dimensions are fixed; this is not body scanning or physical fit simulation. Some compound outfits and decorative details remain approximations. Sleeve fabrics currently use a solid material finish; body artwork and fabric images are mapped to the main garment surfaces. Public sign-in remains through ChatGPT; direct Google OAuth remains separate work.
