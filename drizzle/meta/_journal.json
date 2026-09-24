@@ -8,6 +8,13 @@
       "when": 1788955072335,
       "tag": "0000_normal_wind_dancer",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1789943955486,
+      "tag": "0001_clear_archangel",
+      "breakpoints": true
     }
   ]
 }

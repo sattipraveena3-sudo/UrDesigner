@@ -1,0 +1,11 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {freshDesign,selectGarment,normalizeDocument,baseLayer,dimensions,newId} from '../lib/urdesigner/model';
+import {garmentCatalog} from '../lib/urdesigner/catalog';
+import {garmentSurface,pantsSurface,sleeveSurface} from '../lib/urdesigner/mesh';
+import {looks,applyLook} from '../lib/urdesigner/looks';
+import {inspectGLB} from '../lib/urdesigner/glb';
+test('all styled looks preserve personal work and normalize',()=>{const d={...freshDesign(),notes:'Keep my notes',layers:[baseLayer('text','back')],references:[{id:newId(),asset:newId(),name:'Reference',note:'Keep'}]};for(const l of looks){const next=normalizeDocument(applyLook(d,l.id));assert.deepEqual(next.layers,d.layers);assert.deepEqual(next.references,d.references);assert.equal(next.notes,d.notes)}});
+test('garment and trouser geometry remains bounded at length extremes',()=>{for(const spec of garmentCatalog)for(const length of [.55,.75,1.08]){const d=selectGarment(freshDesign(),spec.id);d.construction.length=length;d.details.pleats=true;for(const side of ['front','back'] as const)for(const g of [garmentSurface(d,side),pantsSurface(d,true,side),sleeveSurface(d,false,side)]){const positions=Array.from(g.getAttribute('position').array);assert.ok(positions.every(n=>Number.isFinite(n)&&Math.abs(n)<5),spec.id+' '+length);g.dispose()}if(spec.kind==='pants')assert.ok(dimensions(d).bottom>=405)}});
+function glb(doc:unknown){const json=Buffer.from(JSON.stringify(doc));const len=Math.ceil(json.length/4)*4,b=Buffer.alloc(20+len,32);b.writeUInt32LE(0x46546c67,0);b.writeUInt32LE(2,4);b.writeUInt32LE(b.length,8);b.writeUInt32LE(len,12);b.writeUInt32LE(0x4e4f534a,16);json.copy(b,20);return b.buffer.slice(b.byteOffset,b.byteOffset+b.byteLength) as ArrayBuffer}
+test('GLB inspector rejects external resources and corrupt containers',()=>{assert.equal(inspectGLB(glb({asset:{version:'2.0'}})).asset.version,'2.0');assert.throws(()=>inspectGLB(glb({asset:{version:'2.0'},images:[{uri:'https://example.test/private'}]})),/self-contained/);assert.throws(()=>inspectGLB(glb({asset:{version:'2.0'},extensionsRequired:['KHR_draco_mesh_compression']})),/uncompressed/);assert.throws(()=>inspectGLB(new ArrayBuffer(32)),/Invalid/)});

@@ -1,0 +1,3 @@
+import {z} from 'zod';
+const png=z.string().max(1400000).regex(/^data:image\/png;base64,[A-Za-z0-9+/]+=*$/).refine(value=>{try{const bytes=Uint8Array.from(atob(value.split(',')[1]),c=>c.charCodeAt(0));if(bytes.length<24||bytes.length>1000000||Array.from(bytes.slice(0,8)).join(',')!=='137,80,78,71,13,10,26,10')return false;const view=new DataView(bytes.buffer);return view.getUint32(16)>0&&view.getUint32(16)<=1024&&view.getUint32(20)>0&&view.getUint32(20)<=1024}catch{return false}},'Invalid preview image');
+export const shareSchema=z.object({project:z.string().uuid(),title:z.string().min(1).max(100),front:png,back:png}).strict();
